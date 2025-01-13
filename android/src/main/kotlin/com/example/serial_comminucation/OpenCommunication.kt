@@ -6,17 +6,22 @@
  */
 package com.example.serial_comminucation
 
-import android.text.TextUtils
-import android.util.Log
+import android.R.attr.path
 import cn.lalaki.SerialPort
-import java.io.File
 import com.google.common.hash.HashCode
-import io.flutter.plugin.common.EventChannel
+import java.io.File
 
 
 class OpenCommunication {
-    var communication: OpenCommunication = OpenCommunication()
+
     private var serialPort: SerialPort? = null
+
+    fun initdata() {
+
+
+
+    }
+
 
 
     fun getSerialList() : List<String>? {
@@ -25,6 +30,7 @@ class OpenCommunication {
     }
 
     fun open(name: String,isAscii: Boolean, baudRate: Int) {
+
         if(serialPort != null) {
             serialPort?.close()
             serialPort = null
@@ -32,7 +38,8 @@ class OpenCommunication {
         serialPort = SerialPort(name, baudRate, object : SerialPort.DataCallback {
             override fun onData(data: ByteArray) {
                 val hexStr = HashCode.fromBytes(data).toString()
-                CustomEventHandler.sendEvent(hexStr + "\n")
+                var datad = String(data)
+                CustomEventHandler.sendEvent(datad + "\n")
             }
         })
     }
