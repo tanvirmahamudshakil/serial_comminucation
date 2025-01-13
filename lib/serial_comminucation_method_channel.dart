@@ -8,10 +8,10 @@ import 'serial_comminucation_platform_interface.dart';
 class MethodChannelSerialComminucation extends SerialComminucationPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
-  final methodChannel = const MethodChannel('embedded_serial');
+  final methodChannel = const MethodChannel("dev.ak.flutter_serial/embedded_serial_method_channel");
 
   ///EventChannel for opening the inputStream and OutputStream
-  final eventChannel = const EventChannel("log_tv");
+  final eventChannel = const EventChannel("dev.ak.flutter_serial/embedded_serial_event_channel");
 
   ///Once this method is called, Operations like [openPort],[closePort] etc...
   ///result will be return from this stream

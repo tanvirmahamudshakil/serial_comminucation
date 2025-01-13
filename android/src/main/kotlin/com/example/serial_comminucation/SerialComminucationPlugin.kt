@@ -22,13 +22,16 @@ class SerialComminucationPlugin: FlutterPlugin, MethodCallHandler {
   var communication: OpenCommunication = OpenCommunication()
   private var receiver: CustomEventHandler? = null
 
+  private val methodChannelName = "dev.ak.flutter_serial/embedded_serial_method_channel"
+  private val eventChannelName = "dev.ak.flutter_serial/embedded_serial_event_channel"
+
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     setupChannels(flutterPluginBinding.binaryMessenger, flutterPluginBinding.applicationContext);
-    methodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, "embedded_serial")
+    methodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, methodChannelName)
     methodChannel?.setMethodCallHandler(this)
   }
   private fun setupChannels(messenger: BinaryMessenger, context: Context) {
-    eventChannel = EventChannel(messenger, "log_tv")
+    eventChannel = EventChannel(messenger, eventChannelName)
     receiver = CustomEventHandler()
     eventChannel?.setStreamHandler(receiver)
   }
