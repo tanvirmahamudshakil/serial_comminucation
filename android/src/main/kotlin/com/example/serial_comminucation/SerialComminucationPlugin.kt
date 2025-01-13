@@ -23,6 +23,7 @@ class SerialComminucationPlugin: FlutterPlugin, MethodCallHandler {
   private var receiver: CustomEventHandler? = null
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    setupChannels(flutterPluginBinding.binaryMessenger, flutterPluginBinding.applicationContext);
     methodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, "embedded_serial")
     methodChannel?.setMethodCallHandler(this)
   }
@@ -48,8 +49,7 @@ class SerialComminucationPlugin: FlutterPlugin, MethodCallHandler {
     val argments = (call.arguments() as Map<String, String>?)
     when (call.method) {
       "embeddedSerial/availablePorts" -> {
-        val list: MutableList<String> = ArrayList()
-        list.addAll(communication.sendDeviceData())
+        val list = communication.getSerialList() ?: emptyList()
         result.success(list)
       }
 
@@ -59,29 +59,8 @@ class SerialComminucationPlugin: FlutterPlugin, MethodCallHandler {
       )
 
       "embeddedSerial/close" -> communication.close()
-      "embeddedSerial/send" -> communication.send(argments!!["message"])
-      "embeddedSerial/clearLog" -> {
-        communication.logChannel = ""
-        CustomEventHandler.sendEvent(
-          mapOf(
-            "LogChannel" to communication.logChannel,
-            "readChannel" to communication.readChannel,
-          )
-        )
-      }
 
-      "embeddedSerial/clearRead" -> {
-        communication.readChannel = ""
-        CustomEventHandler.sendEvent(
-          mapOf(
-            "LogChannel" to communication.logChannel,
-            "readChannel" to communication.readChannel,
-
-          )
-        )
-      }
-
-      "embeddedSerial/destroy" -> communication.destroyResources()
+      "embeddedSerial/destroy" -> communication.close()
       else -> result.notImplemented()
     }
   }

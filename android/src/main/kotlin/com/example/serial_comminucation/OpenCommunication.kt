@@ -8,133 +8,37 @@ package com.example.serial_comminucation
 
 import android.text.TextUtils
 import android.util.Log
-import android_serialport_api.SerialPortFinder
-import android_serialport_api.port.BaseReader
-import android_serialport_api.port.SerialApiManager
-
+import cn.lalaki.SerialPort
+import java.io.File
+import com.google.common.hash.HashCode
+import io.flutter.plugin.common.EventChannel
 
 
 class OpenCommunication {
-    private var spManager: SerialApiManager? = null
-    private var baseReader: BaseReader? = null
-    private var currentPort: String? = null
-    var logChannel: String = ""
-    var readChannel: String = ""
 
-    var entries: List<String> = ArrayList()
-    var entryValues: List<String> = ArrayList()
+    private var serialPort: SerialPort? = null
 
-    fun destroyResources() {
-        spManager!!.destroy()
+
+    fun getSerialList() : List<String>? {
+       return File("/dev/").listFiles { _, s -> s.contains("ttys", ignoreCase = true) }
+            ?.sortedBy { it.name }?.map { it.absolutePath }
     }
 
-    fun initData() {
-        spManager = SerialApiManager.getInstances().setLogInterceptor { type, port, isAscii, log ->
-            Log.d(
-                "SerialPortLog", StringBuffer()
-                    .append("Serial Port ：").append(port)
-                    .append("\ndata format ：").append(if (isAscii) "ascii" else "hexString")
-                    .append("\ntype：").append(type)
-                    .append("messages：").append(log).toString()
-            )
-            logChannel += "\n" + (StringBuffer()
-                .append(" ").append(port)
-                .append(" ").append(if (isAscii) "ascii" else "hexString")
-                .append(" ").append(type)
-                .append("：").append(log)
-                .append("\n").toString())
-            CustomEventHandler.sendEvent(
-                mapOf(
-                    "LogChannel" to logChannel,
-
-                    "readChannel" to readChannel,
-
-                )
-            )
+    fun open(name: String,isAscii: Boolean, baudRate: Int) {
+        if(serialPort != null) {
+            serialPort?.close()
+            serialPort = null
         }
-        baseReader = object : BaseReader() {
-            override fun onParse(port: String, isAscii: Boolean, read: String) {
-                Log.d(
-                    "SerialPortRead", StringBuffer()
-                        .append(port).append("/").append(if (isAscii) "ascii" else "hex")
-                        .append(" read：").append(read).append("\n").toString()
-                )
-                readChannel += "\n" + (StringBuffer()
-                    .append(port).append("/").append(if (isAscii) "ascii" else "hex")
-                    .append(" read：").append(read).append("\n").toString())
-                CustomEventHandler.sendEvent(
-                    mapOf(
-                        "LogChannel" to logChannel,
-
-                        "readChannel" to readChannel,
-
-                    )
-                )
+        serialPort = SerialPort(name, baudRate, object : SerialPort.DataCallback {
+            override fun onData(data: ByteArray) {
+                val hexStr = HashCode.fromBytes(data).toString()
+                CustomEventHandler.sendEvent(mapOf("scale_data" to hexStr))
             }
-        }
+        })
     }
-
-    fun sendDeviceData(): List<String> {
-        val mSerialPortFinder = SerialPortFinder()
-        entries = mSerialPortFinder.allDevices.toList()
-        entryValues = mSerialPortFinder.allDevicesPath.toList()
-        return entryValues
-    }
-
-
-    fun open(name: String, isAscii: Boolean, baudRate: Int) {
-        initData()
-        var checkPort = name
-        if (TextUtils.isEmpty(checkPort)) {
-            return
-        } else if (TextUtils.equals(checkPort, "other")) {
-            checkPort = name
-            if (TextUtils.isEmpty(checkPort)) {
-                return
-            }
-        }
-
-        if (TextUtils.equals(currentPort, checkPort)) {
-            return
-        }
-
-        if (!TextUtils.isEmpty(currentPort)) {
-            // Close the CurrentPort serial port
-            spManager!!.stopSerialPort(currentPort)
-        }
-
-        if (entryValues.contains(checkPort)) {
-            currentPort = checkPort
-            spManager!!.startSerialPort(checkPort, isAscii, baseReader, baudRate)
-            changeCode(isAscii)
-        }
-    }
-
 
     fun close() {
-        if (!TextUtils.isEmpty(currentPort)) {
-            // currentPort
-            spManager!!.stopSerialPort(currentPort)
-            currentPort = ""
-        }
-    }
-
-    fun send(sendCommand: String?) {
-        if (TextUtils.isEmpty(currentPort)) {
-            return
-        }
-
-        if (TextUtils.isEmpty(sendCommand)) {
-            return
-        }
-        // send data
-        spManager!!.send(currentPort, sendCommand)
-    }
-
-    private fun changeCode(isAscii: Boolean) {
-        if (TextUtils.isEmpty(currentPort)) {
-            return
-        }
-        spManager!!.setReadCode(currentPort, isAscii)
+        serialPort?.close()
+        serialPort = null
     }
 }
