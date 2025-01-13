@@ -29,7 +29,7 @@ internal class CustomEventHandler : BroadcastReceiver(), EventChannel.StreamHand
         val mainHandler: Handler = Handler(Looper.getMainLooper())
 
 
-        fun sendEvent(response: Map<String?, String?>?) {
+        fun sendEvent(response: String) {
             val runnable = Runnable {
                 events!!.success(
                     response

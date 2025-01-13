@@ -15,7 +15,7 @@ import io.flutter.plugin.common.EventChannel
 
 
 class OpenCommunication {
-
+    var communication: OpenCommunication = OpenCommunication()
     private var serialPort: SerialPort? = null
 
 
@@ -32,7 +32,7 @@ class OpenCommunication {
         serialPort = SerialPort(name, baudRate, object : SerialPort.DataCallback {
             override fun onData(data: ByteArray) {
                 val hexStr = HashCode.fromBytes(data).toString()
-                CustomEventHandler.sendEvent(mapOf("scale_data" to hexStr))
+                CustomEventHandler.sendEvent(hexStr + "\n")
             }
         })
     }
